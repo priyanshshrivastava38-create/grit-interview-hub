@@ -290,7 +290,7 @@ export function StatCard({
   icon?: ReactNode;
 }) {
   return (
-    <Card className="p-4">
+    <Card className="p-4 transition-shadow hover:shadow-pop">
       <div className="flex items-start justify-between gap-2">
         <p className="text-[12px] font-medium uppercase tracking-[0.06em] text-muted">{label}</p>
         {icon ? <span className="text-muted">{icon}</span> : null}

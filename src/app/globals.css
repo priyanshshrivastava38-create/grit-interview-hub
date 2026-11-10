@@ -92,6 +92,11 @@ dialog::backdrop {
   backdrop-filter: blur(2px);
 }
 
+dialog.command-dialog {
+  margin: 12vh auto auto;
+  max-width: min(100% - 2rem, 620px);
+}
+
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator {
   opacity: 0.55;

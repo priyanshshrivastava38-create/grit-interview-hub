@@ -1,23 +1,27 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  ArrowLeftRight,
   Award,
   BarChart3,
   Bell,
   CalendarCheck2,
   CalendarDays,
   CalendarPlus,
+  ChevronRight,
   ClipboardCheck,
   ClipboardList,
   Clock,
   Gauge,
+  Home,
   LogOut,
   Menu,
   RotateCcw,
   ScrollText,
+  Search,
   ShieldAlert,
   Users,
   X,
@@ -25,6 +29,8 @@ import {
 import { logout } from "@/app/actions/session";
 import { ResetDemoButton } from "@/components/reset-demo-button";
 import { Avatar } from "@/components/ui";
+import { CommandMenu } from "@/components/command-menu";
+import { NotificationBell, type NotificationPreview } from "@/components/notification-bell";
 import { cn, roleLabel } from "@/lib/utils";
 
 type NavItem = { href: string; label: string; icon: ReactNode; badge?: number };
@@ -146,19 +152,54 @@ function isActive(pathname: string, href: string): boolean {
 export function AppShell({
   user,
   unread,
+  notifications,
   demoMode,
   timezoneLabel,
   children,
 }: {
   user: { name: string; email: string; role: string; timezone: string };
   unread: number;
+  notifications: NotificationPreview[];
   demoMode: boolean;
   timezoneLabel: string;
   children: ReactNode;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!profileOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (!profileRef.current?.contains(event.target as Node)) setProfileOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setProfileOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [profileOpen]);
+
   const groups = navFor(user.role, unread);
+  const commandGroups = [
+    ...groups.map((group) => ({
+      title: group.title,
+      items: group.items.map((item) => ({ href: item.href, label: item.label, icon: item.icon })),
+    })),
+    {
+      title: "Workspace",
+      items: [
+        { href: "/", label: "Product overview", icon: <Home className="size-[18px]" /> },
+        { href: "/login", label: "Switch demo role", icon: <ArrowLeftRight className="size-[18px]" /> },
+      ],
+    },
+  ];
 
   useEffect(() => {
     if (!open) return;
@@ -325,42 +366,100 @@ export function AppShell({
             >
               <Menu className="size-5" />
             </button>
-            <p className="text-[13px] font-semibold tracking-tight text-ink">{titleFor(pathname)}</p>
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="hidden text-[11px] font-medium uppercase tracking-[0.08em] text-muted xl:inline">
+                {roleLabel(user.role)}
+              </span>
+              <ChevronRight className="hidden size-3 text-zinc-300 xl:inline" />
+              <p className="truncate text-[13px] font-semibold tracking-tight text-ink">{titleFor(pathname)}</p>
+            </div>
             <div className="ml-auto flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setCommandOpen(true)}
+                className="hidden h-9 w-48 items-center gap-2 rounded-[9px] border border-line bg-surface px-3 text-[12.5px] font-medium text-muted shadow-card transition-colors hover:border-line-strong hover:text-ink md:flex xl:w-60"
+              >
+                <Search className="size-3.5" />
+                <span>Search workspace</span>
+                <kbd className="ml-auto rounded border border-line bg-canvas px-1.5 py-0.5 text-[10px] font-medium text-muted">
+                  ⌘K
+                </kbd>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCommandOpen(true)}
+                className="inline-flex size-9 items-center justify-center rounded-[9px] text-ink-soft transition-colors hover:bg-white hover:shadow-card md:hidden"
+                aria-label="Search workspace"
+              >
+                <Search className="size-[18px]" />
+              </button>
               <span
                 className="hidden items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 text-[11px] font-medium text-ink-soft shadow-card sm:inline-flex"
                 title={`All times shown in ${user.timezone}`}
               >
                 <Clock className="size-3.5 text-muted" /> {timezoneLabel}
               </span>
-              <Link
-                href="/notifications"
-                className="relative inline-flex size-9 items-center justify-center rounded-[9px] text-ink-soft hover:bg-white hover:shadow-card"
-                aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
-              >
-                <Bell className="size-[18px]" />
-                {unread > 0 ? (
-                  <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-accent ring-2 ring-canvas" />
+              <NotificationBell unread={unread} items={notifications} />
+              <div ref={profileRef} className="relative ml-0.5">
+                <button
+                  type="button"
+                  onClick={() => setProfileOpen((current) => !current)}
+                  aria-label="Account menu"
+                  aria-haspopup="menu"
+                  aria-expanded={profileOpen}
+                  className={cn("rounded-full transition-shadow", profileOpen && "ring-2 ring-accent/25")}
+                >
+                  <Avatar name={user.name} className="size-8 text-[11px]" />
+                </button>
+                {profileOpen ? (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-[calc(100%+8px)] z-50 w-64 overflow-hidden rounded-[14px] border border-line bg-surface shadow-pop"
+                  >
+                    <div className="flex items-center gap-2.5 border-b border-line px-3 py-3">
+                      <Avatar name={user.name} className="size-9 text-[12px]" />
+                      <div className="min-w-0">
+                        <p className="truncate text-[12.5px] font-semibold text-ink">{user.name}</p>
+                        <p className="truncate text-[11px] text-muted">{user.email}</p>
+                      </div>
+                    </div>
+                    <div className="p-1.5">
+                      <Link
+                        role="menuitem"
+                        href="/"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex items-center gap-2 rounded-[8px] px-2.5 py-2 text-[12.5px] font-medium text-ink-soft hover:bg-canvas hover:text-ink"
+                      >
+                        <Home className="size-4 text-zinc-400" /> Product overview
+                      </Link>
+                      <Link
+                        role="menuitem"
+                        href="/login"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex items-center gap-2 rounded-[8px] px-2.5 py-2 text-[12.5px] font-medium text-ink-soft hover:bg-canvas hover:text-ink"
+                      >
+                        <ArrowLeftRight className="size-4 text-zinc-400" /> Switch demo role
+                      </Link>
+                    </div>
+                    <form action={logout} className="border-t border-line p-1.5">
+                      <button
+                        type="submit"
+                        role="menuitem"
+                        className="flex w-full items-center gap-2 rounded-[8px] px-2.5 py-2 text-left text-[12.5px] font-medium text-ink-soft hover:bg-bad-soft hover:text-bad"
+                      >
+                        <LogOut className="size-4 text-zinc-400" /> Sign out
+                      </button>
+                    </form>
+                  </div>
                 ) : null}
-              </Link>
-              <Link
-                href={
-                  user.role === "STUDENT"
-                    ? "/student"
-                    : user.role === "INTERVIEWER"
-                      ? "/interviewer"
-                      : "/admin"
-                }
-                className="ml-0.5 rounded-full"
-                aria-label="Your profile"
-              >
-                <Avatar name={user.name} className="size-8 text-[11px]" />
-              </Link>
+              </div>
             </div>
           </div>
         </header>
         <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-[1200px] px-4 py-6 outline-none sm:px-6 lg:px-8 lg:py-8">{children}</main>
       </div>
+
+      <CommandMenu open={commandOpen} onOpenChange={setCommandOpen} groups={commandGroups} />
     </div>
   );
 }

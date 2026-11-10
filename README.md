@@ -23,6 +23,17 @@ The application is a real Next.js + PostgreSQL system. Bookings, state changes, 
 | Validation | Zod on every server action |
 | Tests | `node:test` + `tsx`, against a real PostgreSQL test database |
 
+## Interface
+
+The app is built as an enterprise workspace rather than a set of forms:
+
+- **App shell** with role-aware navigation, workspace breadcrumb, page title and a timezone chip.
+- **⌘K command palette** that searches every page the current role can reach, with arrow-key navigation.
+- **Notification popover** in the header with unread count, relative timestamps and a link to full history.
+- **Account menu** with identity, product overview, demo-role switching and sign out.
+- **Clearance-path tracker** on the student dashboard: six stages (skills → eligibility → booking → interview → result → badge) with done, current, attention and upcoming states.
+- Responsive mobile drawer with focus/scroll handling, native dialogs for confirmations, toast feedback and keyboard-accessible controls throughout.
+
 ## Demo access
 
 The login screen lists seeded personas and signs in with a signed, http-only session cookie. Use the three quick actions (**Continue as Student / Interviewer / Interview operations**) or search the scenario list.

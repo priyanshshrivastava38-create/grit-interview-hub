@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { requireStudent } from "@/lib/auth";
 import { getStudentDashboard } from "@/lib/analytics";
+import { JourneyTracker, type JourneyStep } from "@/components/journey";
 import {
   Avatar,
   Badge,
@@ -71,6 +72,75 @@ export default async function StudentOverviewPage() {
   const approvedRetake = data.retakes.find((retake) => retake.status === "APPROVED");
   const badgeAward = badge;
   const missingSkills = skills.filter((skill) => skill.skill.isRequired && skill.status !== "COMPLETED");
+
+  const journeySteps: JourneyStep[] = (() => {
+    const skillsDone = missingSkills.length === 0;
+    const revoked = profile.eligibilityStatus === "ELIGIBILITY_REVOKED";
+    const isEligible = profile.eligibilityStatus === "ELIGIBLE";
+    const hasBooked = Boolean(activeInterview) || data.history.length > 0;
+    const resultPending = Boolean(pendingResult);
+    const resultPublished = Boolean(publishedResult);
+    const badgeState: JourneyStep["state"] = badgeAward
+      ? badgeAward.status === "AWARDED"
+        ? "done"
+        : "attention"
+      : publishedResult?.outcome === "PASS"
+        ? "current"
+        : "upcoming";
+
+    return [
+      {
+        label: "Skills",
+        detail: `${completedSkills}/${skills.length} complete`,
+        state: skillsDone ? "done" : "current",
+      },
+      {
+        label: "Eligibility",
+        detail: revoked ? "On hold" : isEligible ? "Unlocked" : "Locked",
+        state: revoked ? "attention" : isEligible ? "done" : skillsDone ? "current" : "upcoming",
+      },
+      {
+        label: "Booking",
+        detail: activeInterview
+          ? formatDate(activeInterview.booking.slot.startsAt)
+          : hasBooked
+            ? "Booked previously"
+            : "Choose a slot",
+        state: hasBooked ? "done" : isEligible && skillsDone ? "current" : "upcoming",
+      },
+      {
+        label: "Interview",
+        detail: activeInterview
+          ? formatDate(activeInterview.booking.slot.startsAt)
+          : resultPending || resultPublished
+            ? "Attended"
+            : "Not scheduled",
+        state: resultPending || resultPublished ? "done" : activeInterview ? "current" : "upcoming",
+      },
+      {
+        label: "Result",
+        detail: publishedResult
+          ? publishedResult.outcome === "PASS"
+            ? "Passed"
+            : publishedResult.outcome === "FAIL"
+              ? "Not passed"
+              : "Retake later"
+          : resultPending
+            ? "Awaiting publication"
+            : "Not published",
+        state: publishedResult ? "done" : resultPending ? "current" : "upcoming",
+      },
+      {
+        label: "Badge",
+        detail: badgeAward
+          ? badgeAward.status.replaceAll("_", " ").toLowerCase()
+          : publishedResult?.outcome === "PASS"
+            ? "Awarding soon"
+            : "After a pass",
+        state: badgeState,
+      },
+    ];
+  })();
 
   const nextAction = (() => {
     if (profile.eligibilityStatus === "ELIGIBILITY_REVOKED") {
@@ -203,6 +273,10 @@ export default async function StudentOverviewPage() {
         }
       />
 
+      <div className="mb-4">
+        <JourneyTracker steps={journeySteps} />
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-[1.55fr_1fr]">
         <Card className="overflow-hidden">
           <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start">
@@ -235,7 +309,7 @@ export default async function StudentOverviewPage() {
               { label: "Eligibility", value: profile.eligibilityStatus.replaceAll("_", " ").toLowerCase() },
               { label: "Attempts", value: `${attempts} used` },
               { label: "Badge", value: badgeAward ? badgeAward.status.replaceAll("_", " ").toLowerCase() : "not earned" },
-              { label: "Unread", value: `${data.unreadNotifications} notifications` },
+              { label: "Notifications", value: `${data.unreadNotifications} unread` },
             ].map((item) => (
               <div key={item.label} className="border-r border-line px-4 py-3 last:border-0">
                 <p className="text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted">{item.label}</p>
