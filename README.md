@@ -36,6 +36,7 @@ The app is built as an enterprise workspace rather than a set of forms:
 - **Clearance-path tracker** on the student dashboard: six stages (skills → eligibility → booking → interview → result → badge) with done, current, attention and upcoming states. On mobile the six stages become a complete two-column grid instead of a scrolled strip.
 - **Mobile bottom navigation** with the role's four primary destinations, an active marker and a More button for the full drawer.
 - **Progressive demo login**: one recommended persona per role up front, with the full scenario list behind a disclosure and search.
+- **Before/after view** at `/result-impact`: the same dashboard rendered from real seeded records before publication, after a pass with the badge, and after a fail with a dated retake window. Demo-only and read-only.
 - Plain-language booking, reschedule and policy copy; native dialogs for confirmations, toast feedback and keyboard-accessible controls throughout.
 
 ## Demo access
@@ -218,6 +219,7 @@ src/app/
   (app)/                 authenticated student / interviewer / admin routes
   actions/               server actions grouped by role
   login/                 demo persona picker
+  result-impact/         before/after comparison of real seeded result states
 src/lib/
   booking.ts             atomic booking, cancel, reschedule, no-show
   booking-eligibility.ts pure booking rules and policy constants
@@ -227,6 +229,7 @@ src/lib/
   retakes.ts             retake review and scheduling
   malpractice.ts         integrity workflow
   analytics.ts           dashboard queries and chart series
+  student-journey.ts     shared clearance-path and next-action copy
   auth.ts                session and RBAC guards
 src/components/          app shell, UI primitives, charts, dialogs
 tests/                   unit and PostgreSQL integration tests
@@ -235,6 +238,7 @@ tests/                   unit and PostgreSQL integration tests
 ## Known limitations
 
 - Demo authentication only; no SSO, passwords or email delivery. Notifications are in-app.
+- `/result-impact` is a read-only comparison over seeded demo records and returns 404 when `DEMO_MODE=false`; it is the only page that reads student rows without a session.
 - Scheduling is single-timezone (`Asia/Kolkata`) by design for the assignment; the display layer is timezone-aware per user, but slot creation assumes IST wall-clock time.
 - Email/SMS reminders are modelled as notification types but are not sent by an external provider.
 - No file uploads; malpractice evidence is stored as text entered by operations.

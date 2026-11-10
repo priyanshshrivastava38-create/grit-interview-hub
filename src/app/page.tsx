@@ -346,9 +346,9 @@ export default async function LandingPage() {
               <Link href="/login" className={buttonClasses("primary", "lg")}>
                 Open demo access <ArrowRight className="size-4" />
               </Link>
-              <a href="#product" className={buttonClasses("outline", "lg")}>
-                Read the product story
-              </a>
+              <Link href="/result-impact" className={buttonClasses("outline", "lg")}>
+                Before &amp; after a result
+              </Link>
             </div>
           </div>
         </section>

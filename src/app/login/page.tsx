@@ -178,6 +178,14 @@ export default async function LoginPage({
               error={params.error}
               demoMode={env.demoMode}
             />
+            {env.demoMode ? (
+              <p className="mt-3 text-center text-[11.5px] text-muted">
+                Evaluating the result states?{" "}
+                <Link href="/result-impact" className="font-medium text-accent hover:underline">
+                  See before &amp; after a result
+                </Link>
+              </p>
+            ) : null}
           </div>
         </div>
       </div>

@@ -1,49 +1,77 @@
-# GRIT Interview Hub — product & technical write-up
+# GRIT Interview Hub — submission write-up
 
-## The problem
+**Problem.** A student completes the required skills, books one of a limited set of live interview slots, is evaluated, and either earns a badge or gets a dated retake window. Operations must see who is eligible, booked and unbooked, publish results, handle reassignment and malpractice, and never lose the history behind a badge. This is a working Next.js 16 + PostgreSQL application, not a mockup.
 
-GRIT runs a practical clearance for AI Product Engineer candidates. The process looks simple from the outside — finish your skills, book an interview, get a result — but it is a coordination problem with real consequences. Slots are limited and contended, results and badges are contractual, retakes have waiting periods, integrity cases can revoke something already awarded, and every decision has to be explainable later. Most internal tools fail here in one of two ways: they let two people book the same slot, or they let a status change overwrite the record of what happened before.
+## 1. States and what moves them
 
-I built Interview Hub as an opinionated, working system for the three people in that loop: the student, the interviewer, and interview operations.
+Journey: `NOT_ELIGIBLE → ELIGIBLE → (booking) CONFIRMED → SCHEDULED → IN_PROGRESS → COMPLETED → RESULT_PENDING → RESULT_PUBLISHED → badge`.
 
-## What the product does
+| Stage | States | Moves on when (owner) |
+| --- | --- | --- |
+| Eligibility | `NOT_ELIGIBLE`, `ELIGIBLE`, `ELIGIBILITY_REVOKED` | Every required skill completes → `ELIGIBLE` (system). Operations can revoke/restore; revoked students cannot book |
+| Booking and slot | `CONFIRMED`, `CANCELLED`, `RESCHEDULED`, `NO_SHOW`, `COMPLETED`; slot `OPEN`, `BOOKED`, `CANCELLED`, `BLOCKED` | Student books atomically; cancels/reschedules outside 4 hours; operations records no-show; completing closes it |
+| Interview | `SCHEDULED`, `IN_PROGRESS`, `COMPLETED`, `RESULT_PENDING`, `RESULT_PUBLISHED` | Interviewer starts and completes, then submits the evaluation; operations publishes |
+| Result | `PASS`, `FAIL`, `RETAKE_LATER` | Set on publication and terminal; never edited |
+| Badge | `NOT_EARNED`, `PENDING_CLEARANCE`, `AWARDED`, `SUSPENDED`, `NULLIFIED` | A pass awards it; a confirmed integrity case suspends or nullifies while the result record stays |
+| Retake | `PENDING`, `APPROVED`, `REJECTED`, `SCHEDULED`, `COMPLETED` | Requested after `FAIL`/`RETAKE_LATER`; operations decides; approval unlocks booking |
+| Integrity | `REPORTED`, `UNDER_REVIEW`, `CONFIRMED`, `REJECTED`, `CLOSED` | Operations investigates and closes the case with a badge action |
 
-**Students** see one clear next step instead of a wall of controls. The dashboard explains eligibility and which skill milestones are blocking it; the booking screen shows real availability and requires an explicit confirmation that includes the slot, the interviewer and the cancellation policy. After booking, the same page becomes a guidance card pointing to the interview they already hold. Results, badge status, retake windows and notification history are first-class screens, not emails the student has to reconstruct.
+Every transition is validated by one state machine (`src/lib/state-machine.ts`) plus conditional database updates, so a stale tab cannot force an illegal move.
 
-**Interviewers** get the day, the schedule, availability management and a structured evaluation form: three dimension scores, strengths, improvements, internal notes and a recommendation. The form warns when a session is still in the future, and submission closes the interview for editing. An interviewer can only open interviews assigned to them.
+## 2. Edge cases and assumptions
 
-**Interview operations** work queues rather than tables: overdue publications, bookings that need reassignment after an availability block, retake requests, integrity cases. They publish results, award or suspend badges, reassign interviews, record no-shows, investigate malpractice and read an audit trail that records actor, action, before and after values. Analytics are computed from the database, not hard-coded.
+| Edge case | Behaviour |
+| --- | --- |
+| Two students race for one slot | Row locks + conditional update; exactly one wins and the other sees “that slot was just taken” with refreshed availability |
+| Student already holds a confirmed booking | Rejected by a service check and a partial unique index |
+| Double-click / retried request | A unique idempotency key returns the original booking |
+| Slot inside the 60-minute lead time | Not offered and rejected server-side |
+| Cancel/reschedule inside 4 hours | Blocked with the policy explained; outside it, the old booking becomes `RESCHEDULED` and stays in history |
+| Interviewer blocks availability with confirmed bookings | Interviews move to the operations reassignment queue; students are notified |
+| No-show | `NO_SHOW` is recorded; no result is invented |
+| Evaluation edited, or result published twice | State machine rejects both; submitted evaluations are immutable |
+| Fail/retake-later | `retakeEligibleFrom` (14/21-day waits), early review request, attempt caps (3/2) |
+| Malpractice confirmed after a badge | Badge suspended or nullified with a reason; result history preserved and the student notified |
+| Eligibility revoked after booking | Booking stays for operations to reassign; the student sees the hold |
 
-## Architecture
+**Assumptions:** one timezone (`Asia/Kolkata`), 45-minute slots, one active interview type per journey, operations is the only publisher, in-app notifications only, no payments. **Open questions:** should interviewers see a student’s prior feedback, and should retakes use the same interviewer cohort?
 
-The application is a single Next.js 16 App Router project with React Server Components and server actions. There is no separate API layer to drift out of sync: mutations are server actions that authenticate, validate with Zod, call a domain service, and return a typed result the client shows as a toast.
+## 3. Data model and double-booking prevention
 
-The domain is deliberately concentrated. `state-machine.ts` owns the legal transitions for interviews, bookings, badges, retakes, malpractice and eligibility. `booking.ts` owns the atomic booking, cancellation, rescheduling and no-show paths. `results.ts` owns publication, badge award and result notifications. Pages read through `analytics.ts` and focused query helpers. This keeps the rules testable without rendering React, and makes every screen a view over the same invariants.
+| Table | Key fields | Purpose |
+| --- | --- | --- |
+| `User`, `StudentProfile`, `InterviewerProfile` | `email`, `role`; `studentCode`, `eligibilityStatus`, `cohort`; `maxPerDay` | Identity and profiles |
+| `Skill`, `StudentSkill`, `Badge`, `BadgeAward` | `code`, `isRequired`; `status`; `studentId+badgeId`, `awardedAt` | Eligibility and badge clearance |
+| `InterviewerAvailability`, `InterviewSlot` | window/date, `slotMinutes`; `startsAt`, `endsAt`, `status` | Availability and bookable slots |
+| `InterviewBooking` | `studentId`, `slotId`, `status`, `idempotencyKey`, `rescheduledFromId` | Never-deleted booking history |
+| `Interview`, `InterviewEvaluation`, `InterviewResult` | `status`, `outcome`, `retakeEligibleFrom`; three scores, recommendation; `publishedAt` | Session, evaluation, result |
+| `RetakeRequest`, `MalpracticeCase` | `status`, `eligibleFrom`; `status`, `badgeAction`, `allegation`, `resolution` | Exception workflows |
+| `Notification`, `AuditLog` | `type`, `body`, `link`; actor, action, before/after | Messages and explainability |
 
-PostgreSQL with Prisma 7 is the source of truth. The schema models people, availability, slots, bookings, interviews, evaluations, results, badge awards, retake requests, malpractice cases, notifications and audit logs. Money-like history is never mutated: rescheduling marks the old booking `RESCHEDULED` and links the new one to it; cancellations keep the booking row; published results are terminal.
+**Double-booking prevention.** The booking transaction locks the student and slot rows (`SELECT … FOR UPDATE`), re-checks eligibility and slot state inside the lock, then flips the slot with `updateMany({ where: { id, status: "OPEN" } })`; the winner must affect exactly one row. Two partial unique indexes are the database backstop — **one `CONFIRMED` booking per student** and **one per slot**. A PostgreSQL integration test races two students with `Promise.allSettled` and asserts one success, one conflict, and one booking.
 
-## Correctness under contention
+## 4. Three most important student messages (exact copy)
 
-The brief calls out the case that matters: two students racing for one slot, exactly one wins. The booking transaction locks the student profile and the slot row with `SELECT … FOR UPDATE`, re-runs the eligibility and slot checks inside the lock, then reserves the slot with a conditional `updateMany` that must affect exactly one row. Two partial unique indexes — one confirmed booking per student, one per slot — enforce the same rules even if a future code path forgets the lock. A unique idempotency key makes a retried request return the original booking instead of duplicating it.
+**Eligibility unlocked**, when the last required skill completes:
 
-The integration test races two students with `Promise.allSettled` and asserts one success, one `CONFLICT`, one booking, and a slot that is `BOOKED` exactly once. Other tests cover the lead-time rule, cancellation windows, reschedule history, no-show behaviour, invalid scores, double publication, wait-period enforcement, malpractice nullification, revoked eligibility, and the exact assignment notification copy.
+> Congratulations! You have completed the required skill milestones and are now eligible for your GRIT interview. Choose an available slot to begin your badge clearance journey.
 
-## Security and access control
+**Booking confirmed**, immediately after the slot is reserved:
 
-Authentication is a signed, http-only session cookie; in the demo it is issued by the persona picker, and `DEMO_MODE=false` turns it off. Authorization is server-side on every page and every action — `requireRole`, `requireStudent` and `requireInterviewer`. Interviewers are checked against the interview's assigned interviewer, and students against booking ownership, inside the service rather than in the UI. All mutations are Zod-validated, and every consequential action writes an audit row in the same transaction as the change it describes.
+> Your GRIT interview has been successfully booked. Your interview details are available in your dashboard. Please review your scheduled date and time and be ready before the interview begins.
 
-## Design decisions
+**Result published**, on a pass; the badge is awarded at the same time:
 
-The visual language is quiet enterprise software: warm canvas, ink text, a single teal accent, dense but readable tables, and status pills that match the domain vocabulary. The usability work focused on decision points rather than decoration:
+> Congratulations! You have successfully cleared your GRIT interview. Your badge has been awarded and is now available in your dashboard.
 
-- **One next step.** Blocked booking states explain why and link to the screen that resolves them; a preview mode still lets a curious student see availability without implying they can book.
-- **No accidental commitments.** Booking opens a confirmation dialog with slot details and policy before anything is written.
-- **Honest error states.** A lost race produces a specific message ("that slot was just taken"), not a generic failure, and refreshes the availability.
-- **Accessible controls.** Visible focus, skip link, labelled dialogs, Escape-to-close mobile navigation with scroll lock, 44px-class touch targets, and responsive layouts down to 390px.
-- **Exact copy where it is contractual.** The three required student notifications are constants, reused by the notification service and asserted in tests.
+Result variants (`FAIL` / `RETAKE_LATER`) replace the last sentence with the retake instructions. All copy lives in `src/lib/notifications.ts` and is asserted by tests.
 
-## Trade-offs and next steps
+## 5. The prototype, including before/after
 
-Scheduling is intentionally single-timezone (`Asia/Kolkata`) with per-user display formats; multi-timezone availability would be the next domain change, not a UI change. Demo authentication is not production identity — it is isolated behind `DEMO_MODE` and would be replaced with SSO. Notifications are in-app only; the schema already separates type, title, body and deep link, so an email provider can be added behind the same service call.
+- **Student:** `/student` (status, next action, clearance path, result, badge, retakes), `/student/book` (real availability and confirmation dialog), `/student/interviews`, `/student/badge`.
+- **Interviewer:** `/interviewer` (today), `/interviewer/availability` (set/block windows), `/interviewer/interviews/[id]` (schedule, evaluation with three scores, strengths, improvements, recommendation).
+- **Operations:** `/admin` queues, `/admin/students` with booked/unbooked filtering and the “eligible but unbooked” queue, results, retakes, malpractice, audit and analytics.
+- **Before/after:** `/result-impact` renders the same dashboard from real seeded records — Kabir Shah before publication, Meera Krishnan after a pass and badge, Rohan Verma after a fail with a dated retake window. Linked from the landing and login screens.
 
-The result is a system that demonstrates the hard parts of the assignment — concurrency, state, permissions, history and operational clarity — with a UI that a real student or interviewer could use without a walkthrough.
+Demo sign-in is by persona (Student / Interviewer / Interview operations), no password. Live URL is added after Vercel and hosted Postgres are linked; this document does not invent one.
+

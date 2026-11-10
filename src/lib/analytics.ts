@@ -471,6 +471,8 @@ export async function getInterviewerDashboard(interviewerId: string) {
   };
 }
 
+export type StudentDashboardData = Awaited<ReturnType<typeof getStudentDashboard>>;
+
 export function scoreBand(value: number): { label: string; tone: "good" | "warn" | "bad" } {
   if (value >= 75) return { label: "Strong", tone: "good" };
   if (value >= 60) return { label: "Developing", tone: "warn" };

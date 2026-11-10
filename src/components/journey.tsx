@@ -14,14 +14,14 @@ function stepIcon(state: JourneyStep["state"], index: number) {
   return index + 1;
 }
 
-export function JourneyTracker({ steps }: { steps: JourneyStep[] }) {
+export function JourneyTracker({ steps, title = "Your clearance path" }: { steps: JourneyStep[]; title?: string }) {
   const completed = steps.filter((step) => step.state === "done").length;
 
   return (
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-3.5">
         <div>
-          <p className="text-[13px] font-semibold tracking-tight text-ink">Your clearance path</p>
+          <p className="text-[13px] font-semibold tracking-tight text-ink">{title}</p>
           <p className="text-[12px] text-muted">Six stages from skill milestones to an active badge.</p>
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-canvas px-2.5 py-1 text-[11.5px] font-medium text-ink-soft">
