@@ -1,0 +1,462 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  INTERVIEWER
+  ADMIN
+}
+
+enum EligibilityStatus {
+  NOT_ELIGIBLE
+  ELIGIBLE
+  ELIGIBILITY_REVOKED
+}
+
+enum SkillStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum AvailabilityStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum SlotStatus {
+  OPEN
+  BOOKED
+  CANCELLED
+  BLOCKED
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  RESCHEDULED
+  NO_SHOW
+  COMPLETED
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  RESULT_PENDING
+  RESULT_PUBLISHED
+}
+
+enum InterviewOutcome {
+  PASS
+  FAIL
+  RETAKE_LATER
+}
+
+enum BadgeStatus {
+  NOT_EARNED
+  PENDING_CLEARANCE
+  AWARDED
+  SUSPENDED
+  NULLIFIED
+}
+
+enum RetakeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SCHEDULED
+  COMPLETED
+}
+
+enum MalpracticeStatus {
+  REPORTED
+  UNDER_REVIEW
+  CONFIRMED
+  REJECTED
+  CLOSED
+}
+
+enum MalpracticeBadgeAction {
+  NONE
+  SUSPEND
+  NULLIFY
+}
+
+enum NotificationType {
+  ELIGIBILITY_UNLOCKED
+  BOOKING_CONFIRMED
+  BOOKING_RESCHEDULED
+  BOOKING_CANCELLED
+  INTERVIEW_REMINDER
+  INTERVIEW_COMPLETED
+  RESULT_PUBLISHED
+  BADGE_AWARDED
+  RETAKE_UPDATED
+  MALPRACTICE_UPDATE
+  SYSTEM
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      Role
+  timezone  String   @default("Asia/Kolkata")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student          StudentProfile?
+  interviewer      InterviewerProfile?
+  notifications    Notification[]
+  auditLogs        AuditLog[]
+  evaluations      InterviewEvaluation[]
+  publishedResults InterviewResult[]
+  reviewedRetakes  RetakeRequest[]          @relation("RetakeReviewer")
+  reportedCases    MalpracticeCase[]        @relation("CaseReporter")
+  decidedCases     MalpracticeCase[]        @relation("CaseConfirmer")
+
+  @@index([role])
+}
+
+model StudentProfile {
+  id                 String           @id @default(cuid())
+  userId             String           @unique
+  studentCode        String           @unique
+  program            String
+  cohort             String
+  university         String
+  eligibilityStatus  EligibilityStatus @default(NOT_ELIGIBLE)
+  eligibilityReason  String?
+  eligibleAt         DateTime?
+  revokedAt          DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills      StudentSkillProgress[]
+  bookings    InterviewBooking[]
+  interviews  Interview[]
+  badgeAwards BadgeAward[]
+  retakes     RetakeRequest[]
+  cases       MalpracticeCase[]
+
+  @@index([eligibilityStatus])
+}
+
+model InterviewerProfile {
+  id                  String  @id @default(cuid())
+  userId              String  @unique
+  title               String
+  specialty           String
+  bio                 String  @db.Text
+  timezone            String  @default("Asia/Kolkata")
+  maxDailyInterviews  Int     @default(6)
+  isActive            Boolean @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  availability InterviewerAvailability[]
+  slots        InterviewSlot[]
+  interviews   Interview[]
+
+  @@index([isActive])
+}
+
+model Skill {
+  id          String  @id @default(cuid())
+  code        String  @unique
+  name        String
+  description String  @db.Text
+  sortOrder   Int     @default(0)
+  isRequired  Boolean @default(true)
+
+  progress StudentSkillProgress[]
+}
+
+model StudentSkillProgress {
+  id          String      @id @default(cuid())
+  studentId   String
+  skillId     String
+  status      SkillStatus @default(NOT_STARTED)
+  score       Int?
+  completedAt DateTime?
+  updatedAt   DateTime    @updatedAt
+
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  skill   Skill          @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, skillId])
+  @@index([studentId, status])
+}
+
+model InterviewType {
+  id               String  @id @default(cuid())
+  code             String  @unique
+  name             String
+  description      String  @db.Text
+  durationMinutes  Int     @default(45)
+  passingScore     Int     @default(70)
+  retakeWaitDays   Int     @default(14)
+  maxAttempts      Int     @default(3)
+  isActive         Boolean @default(true)
+
+  interviews     Interview[]
+  badges         Badge[]
+  retakeRequests RetakeRequest[]
+}
+
+model Badge {
+  id              String @id @default(cuid())
+  code            String @unique
+  name            String
+  description     String @db.Text
+  level           String
+  validityMonths  Int    @default(24)
+  interviewTypeId String
+
+  interviewType InterviewType @relation(fields: [interviewTypeId], references: [id])
+  awards        BadgeAward[]
+
+  @@index([interviewTypeId])
+}
+
+model InterviewerAvailability {
+  id            String             @id @default(cuid())
+  interviewerId String
+  date          DateTime           @db.Date
+  startTime     String
+  endTime       String
+  slotMinutes   Int                @default(45)
+  breakStart    String?
+  breakEnd      String?
+  status        AvailabilityStatus @default(ACTIVE)
+  note          String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  interviewer InterviewerProfile @relation(fields: [interviewerId], references: [id], onDelete: Cascade)
+  slots       InterviewSlot[]
+
+  @@unique([interviewerId, date, startTime])
+  @@index([interviewerId, date])
+}
+
+model InterviewSlot {
+  id            String     @id @default(cuid())
+  availabilityId String
+  interviewerId String
+  startsAt      DateTime
+  endsAt        DateTime
+  status        SlotStatus @default(OPEN)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  availability InterviewerAvailability @relation(fields: [availabilityId], references: [id], onDelete: Cascade)
+  interviewer  InterviewerProfile      @relation(fields: [interviewerId], references: [id], onDelete: Cascade)
+  bookings     InterviewBooking[]
+
+  @@unique([interviewerId, startsAt])
+  @@index([status, startsAt])
+  @@index([availabilityId])
+}
+
+model InterviewBooking {
+  id                 String        @id @default(cuid())
+  studentId          String
+  slotId             String
+  status             BookingStatus @default(CONFIRMED)
+  attemptNumber      Int           @default(1)
+  idempotencyKey     String?       @unique
+  bookedAt           DateTime      @default(now())
+  cancelledAt        DateTime?
+  cancellationReason String?
+  rescheduledFromId  String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  student         StudentProfile    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  slot            InterviewSlot     @relation(fields: [slotId], references: [id], onDelete: Restrict)
+  rescheduledFrom InterviewBooking? @relation("RescheduleChain", fields: [rescheduledFromId], references: [id], onDelete: SetNull)
+  rescheduledTo   InterviewBooking[] @relation("RescheduleChain")
+  interview       Interview?
+
+  @@index([studentId, status])
+  @@index([slotId])
+  @@index([status, bookedAt])
+}
+
+model Interview {
+  id                 String          @id @default(cuid())
+  bookingId          String          @unique
+  studentId          String
+  interviewerId      String
+  interviewTypeId    String
+  status             InterviewStatus @default(SCHEDULED)
+  outcome            InterviewOutcome?
+  attemptNumber      Int             @default(1)
+  retakeEligibleFrom DateTime?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  resultPublishedAt  DateTime?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  booking       InterviewBooking     @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  student       StudentProfile       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  interviewer   InterviewerProfile   @relation(fields: [interviewerId], references: [id], onDelete: Restrict)
+  interviewType InterviewType        @relation(fields: [interviewTypeId], references: [id], onDelete: Restrict)
+  evaluation    InterviewEvaluation?
+  result        InterviewResult?
+  badgeAward    BadgeAward?
+  retakes       RetakeRequest[]
+  cases         MalpracticeCase[]
+
+  @@index([interviewerId, status])
+  @@index([studentId, status])
+  @@index([status, resultPublishedAt])
+}
+
+model InterviewEvaluation {
+  id                   String           @id @default(cuid())
+  interviewId          String           @unique
+  technicalScore       Int
+  problemSolvingScore  Int
+  communicationScore   Int
+  overallScore         Int
+  strengths            String           @db.Text
+  improvements         String           @db.Text
+  notes                String           @db.Text
+  recommendation       InterviewOutcome
+  submittedByUserId    String
+  submittedAt          DateTime         @default(now())
+
+  interview       Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  submittedByUser User      @relation(fields: [submittedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([submittedAt])
+}
+
+model InterviewResult {
+  id                String           @id @default(cuid())
+  interviewId       String           @unique
+  outcome           InterviewOutcome
+  overallScore      Int
+  feedbackSummary   String           @db.Text
+  publishedAt       DateTime         @default(now())
+  publishedByUserId String
+
+  interview       Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  publishedByUser User      @relation(fields: [publishedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([publishedAt])
+}
+
+model BadgeAward {
+  id          String      @id @default(cuid())
+  studentId   String
+  badgeId     String
+  interviewId String      @unique
+  status      BadgeStatus @default(PENDING_CLEARANCE)
+  awardedAt   DateTime?
+  statusNote  String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  badge     Badge          @relation(fields: [badgeId], references: [id], onDelete: Restrict)
+  interview Interview      @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, badgeId])
+  @@index([status])
+}
+
+model RetakeRequest {
+  id              String       @id @default(cuid())
+  studentId       String
+  interviewId     String?
+  interviewTypeId String
+  reason          String       @db.Text
+  status          RetakeStatus @default(PENDING)
+  eligibleFrom    DateTime
+  reviewedByUserId String?
+  reviewedAt      DateTime?
+  decisionNote    String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  student        StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  interview      Interview?       @relation(fields: [interviewId], references: [id], onDelete: SetNull)
+  interviewType  InterviewType    @relation(fields: [interviewTypeId], references: [id], onDelete: Restrict)
+  reviewedByUser User?            @relation("RetakeReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([studentId])
+}
+
+model MalpracticeCase {
+  id                String                 @id @default(cuid())
+  studentId         String
+  interviewId       String
+  reportedByUserId  String
+  status            MalpracticeStatus      @default(REPORTED)
+  severity          String                 @default("MEDIUM")
+  allegation        String                 @db.Text
+  evidence          String?                @db.Text
+  resolution        String?                @db.Text
+  badgeAction       MalpracticeBadgeAction @default(NONE)
+  confirmedByUserId String?
+  confirmedAt       DateTime?
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  student         StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  interview       Interview      @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  reportedByUser  User           @relation("CaseReporter", fields: [reportedByUserId], references: [id], onDelete: Restrict)
+  confirmedByUser User?          @relation("CaseConfirmer", fields: [confirmedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([studentId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String           @db.Text
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+}
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  actorUserId   String?
+  actorRole     Role?
+  action        String
+  entityType    String
+  entityId      String
+  summary       String
+  previousValue Json?
+  newValue      Json?
+  createdAt     DateTime @default(now())
+
+  actor User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([entityType, entityId])
+  @@index([actorUserId])
+}
