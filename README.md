@@ -180,6 +180,12 @@ npm run db:reset-demo
 
 This truncates the application tables and rebuilds the original scenarios. It is destructive by design and is why it is restricted to demo mode and admins.
 
+## Documentation
+
+- [`docs/GRIT-Interview-Hub-report.pdf`](docs/GRIT-Interview-Hub-report.pdf) — the required two-page report: states, edge cases, data model, contention control, exact student messages and before/after screens.
+- [`docs/WRITE-UP.md`](docs/WRITE-UP.md) — the same write-up in Markdown, with [`docs/GRIT-Interview-Hub-write-up.pdf`](docs/GRIT-Interview-Hub-write-up.pdf) as a plain submission copy.
+- [`docs/GRIT-Technical-Manual.pdf`](docs/GRIT-Technical-Manual.pdf) — 24-page engineering and product manual for the interview.
+
 ## Deployment
 
 The application is deployment-ready but **has not been published yet**; this repository does not claim a live URL.
