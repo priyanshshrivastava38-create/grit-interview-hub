@@ -40,9 +40,10 @@ export function JourneyTracker({ steps }: { steps: JourneyStep[] }) {
             )}
           >
             <span
+              style={{ animationDelay: `${index * 60}ms` }}
               className={cn(
-                "mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border text-[10px] font-semibold",
-                step.state === "done" && "border-accent bg-accent text-white",
+                "animate-pop mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border text-[10px] font-semibold",
+                step.state === "done" && "bg-accent-gradient border-transparent text-white",
                 step.state === "current" && "border-accent bg-surface text-accent-ink",
                 step.state === "attention" && "border-[#f2ddb8] bg-warn-soft text-warn",
                 step.state === "upcoming" && "border-line bg-canvas text-muted",
@@ -71,18 +72,21 @@ export function JourneyTracker({ steps }: { steps: JourneyStep[] }) {
             {index < steps.length - 1 ? (
               <span
                 aria-hidden
+                style={{ animationDelay: `${index * 70 + 120}ms` }}
                 className={cn(
-                  "absolute left-[calc(50%+16px)] right-[-50%] top-[13px] h-px",
-                  step.state === "done" ? "bg-accent/35" : "bg-line",
+                  "animate-grow-x absolute left-[calc(50%+16px)] right-[-50%] top-[13px] h-px",
+                  step.state === "done" ? "bg-gradient-to-r from-accent/50 to-accent/15" : "bg-line",
                 )}
               />
             ) : null}
             <div className="flex justify-center">
               <span
+                style={{ animationDelay: `${index * 70}ms` }}
                 className={cn(
-                  "relative z-10 grid size-7 place-items-center rounded-full border text-[11px] font-semibold transition-colors",
-                  step.state === "done" && "border-accent bg-accent text-white",
-                  step.state === "current" && "border-accent bg-accent-soft text-accent-ink ring-4 ring-accent/10",
+                  "animate-pop relative z-10 grid size-7 place-items-center rounded-full border text-[11px] font-semibold transition-colors",
+                  step.state === "done" && "bg-accent-gradient border-transparent text-white",
+                  step.state === "current" &&
+                    "current-step-ring border-accent bg-accent-soft text-accent-ink ring-4 ring-accent/10",
                   step.state === "attention" && "border-[#f2ddb8] bg-warn-soft text-warn",
                   step.state === "upcoming" && "border-line bg-canvas text-muted",
                 )}

@@ -95,10 +95,18 @@ export default async function LoginPage({
 
   return (
     <div className="min-h-dvh bg-canvas lg:grid lg:grid-cols-[0.9fr_1.1fr]">
-      <div className="relative hidden border-r border-line bg-[#f0efeb] p-10 lg:flex lg:flex-col">
+      <div className="relative hidden overflow-hidden border-r border-line bg-[#f0efeb] p-10 lg:flex lg:flex-col">
         <div className="pointer-events-none absolute inset-0 grid-lines opacity-50 [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />
+        <div
+          aria-hidden
+          className="animate-drift pointer-events-none absolute -left-24 top-24 size-80 rounded-full bg-[#0f766e]/15 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="animate-drift pointer-events-none absolute -bottom-24 right-0 size-96 rounded-full bg-[#6366f1]/15 blur-3xl [animation-delay:-6s]"
+        />
         <Link href="/" className="relative flex items-center gap-2.5">
-          <span className="grid size-9 place-items-center rounded-[11px] bg-ink text-[15px] font-semibold text-white">
+          <span className="bg-accent-gradient grid size-9 place-items-center rounded-[11px] text-[15px] font-semibold text-white shadow-[0_4px_12px_-4px_var(--accent-glow)]">
             G
           </span>
           <span className="leading-tight">
@@ -110,7 +118,7 @@ export default async function LoginPage({
         <div className="relative my-auto max-w-md">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">Demo access</p>
           <h1 className="mt-3 text-balance text-[34px] font-semibold leading-[1.12] tracking-[-0.03em]">
-            Three roles. One accountable clearance process.
+            Three roles. One accountable <span className="text-gradient">clearance process.</span>
           </h1>
           <p className="mt-4 text-[14px] leading-7 text-muted">
             Choose a role, then pick any seeded persona. Each one drops you into a different real state — eligibility,
@@ -141,7 +149,7 @@ export default async function LoginPage({
       <div className="flex min-h-dvh flex-col">
         <div className="flex items-center justify-between px-4 py-4 lg:hidden">
           <Link href="/" className="flex items-center gap-2">
-            <span className="grid size-8 place-items-center rounded-[10px] bg-ink text-[13px] font-semibold text-white">
+            <span className="bg-accent-gradient grid size-8 place-items-center rounded-[10px] text-[13px] font-semibold text-white">
               G
             </span>
             <span className="text-[14px] font-semibold tracking-tight">GRIT Interview Hub</span>

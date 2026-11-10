@@ -74,7 +74,7 @@ export function DemoLogin({
   })();
 
   return (
-    <div className="w-full max-w-xl">
+    <div className="page-enter w-full max-w-xl">
       {error ? (
         <div className="mb-4 rounded-xl border border-[#f5cfcb] bg-bad-soft px-4 py-3 text-[13px] text-bad">
           {error === "demo-disabled"
@@ -83,7 +83,7 @@ export function DemoLogin({
         </div>
       ) : null}
 
-      <div className="rounded-[20px] border border-line bg-surface p-5 shadow-pop sm:p-7">
+      <div className="card-gradient-border rounded-[20px] p-5 shadow-pop sm:p-7">
         <div className="flex rounded-[11px] border border-line bg-[#f7f7f4] p-1" role="tablist" aria-label="Demo role">
           {(Object.keys(roleMeta) as Array<keyof typeof roleMeta>).map((key) => (
             <button
@@ -98,7 +98,7 @@ export function DemoLogin({
               className={cn(
                 "flex-1 rounded-[8px] px-2 py-2 text-[12.5px] font-medium transition-colors",
                 role === key
-                  ? "bg-surface text-ink shadow-card ring-1 ring-line"
+                  ? "bg-surface text-accent shadow-card ring-1 ring-line"
                   : "text-muted hover:text-ink",
               )}
             >

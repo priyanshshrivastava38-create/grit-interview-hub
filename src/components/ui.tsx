@@ -7,11 +7,12 @@ export function buttonClasses(
   className?: string,
 ) {
   return cn(
-    "inline-flex items-center justify-center gap-2 rounded-[10px] font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 whitespace-nowrap",
+    "inline-flex items-center justify-center gap-2 rounded-[10px] font-medium transition-[transform,background-color,box-shadow,color,filter] duration-200 disabled:pointer-events-none disabled:opacity-50 whitespace-nowrap",
     size === "sm" && "h-9 px-3.5 text-[13px]",
     size === "md" && "h-10 px-4 text-sm",
     size === "lg" && "h-11 px-5 text-[15px]",
-    variant === "primary" && "bg-accent text-white hover:bg-accent-hover shadow-[0_1px_2px_rgba(15,118,110,0.35)]",
+    variant === "primary" &&
+      "btn-sheen text-white shadow-[0_1px_2px_var(--accent-glow)] hover:-translate-y-px hover:brightness-105 hover:shadow-[0_10px_24px_-12px_var(--accent-glow)] active:translate-y-0 active:brightness-95",
     variant === "secondary" && "bg-ink text-white hover:bg-zinc-800",
     variant === "outline" && "border border-line-strong bg-surface text-ink hover:bg-canvas",
     variant === "ghost" && "text-ink-soft hover:bg-black/[0.04]",
@@ -161,7 +162,7 @@ export function Progress({
 }) {
   const bar =
     tone === "accent"
-      ? "bg-accent"
+      ? "bg-accent-gradient"
       : tone === "good"
         ? "bg-good"
         : tone === "warn"
@@ -224,7 +225,7 @@ export function EmptyState({
   return (
     <div className={cn("flex flex-col items-center justify-center px-6 py-12 text-center", className)}>
       {icon ? (
-        <div className="mb-3 flex size-10 items-center justify-center rounded-full border border-line bg-canvas text-muted">
+        <div className="mb-3 flex size-10 items-center justify-center rounded-full border border-accent/20 bg-accent-soft text-accent">
           {icon}
         </div>
       ) : null}
@@ -290,10 +291,14 @@ export function StatCard({
   icon?: ReactNode;
 }) {
   return (
-    <Card className="p-4 transition-shadow hover:shadow-pop">
+    <Card className="group p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-pop">
       <div className="flex items-start justify-between gap-2">
         <p className="text-[12px] font-medium uppercase tracking-[0.06em] text-muted">{label}</p>
-        {icon ? <span className="text-muted">{icon}</span> : null}
+        {icon ? (
+          <span className="grid size-8 place-items-center rounded-[9px] bg-accent-soft text-accent transition-transform duration-200 group-hover:scale-110">
+            {icon}
+          </span>
+        ) : null}
       </div>
       <p
         className={cn(
@@ -415,7 +420,10 @@ export function PageHeader({
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div className="min-w-0">
         {eyebrow ? (
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{eyebrow}</p>
+          <p className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
+            <span aria-hidden className="bg-accent-gradient size-1.5 rounded-full" />
+            {eyebrow}
+          </p>
         ) : null}
         <h1 className="text-[26px] font-semibold leading-8 tracking-tight text-ink sm:text-[28px]">{title}</h1>
         {description ? <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted">{description}</p> : null}

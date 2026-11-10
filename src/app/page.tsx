@@ -67,6 +67,7 @@ const workflow = [
 
 const roles = [
   {
+    key: "STUDENT",
     label: "Student",
     href: "/login?role=student",
     description: "Eligibility, slot booking, interview details, results, badges and retakes.",
@@ -74,6 +75,7 @@ const roles = [
     icon: <Award className="size-5" />,
   },
   {
+    key: "INTERVIEWER",
     label: "Interviewer",
     href: "/login?role=interviewer",
     description: "Daily schedule, availability, student context and structured evaluations.",
@@ -81,6 +83,7 @@ const roles = [
     icon: <ClipboardCheck className="size-5" />,
   },
   {
+    key: "ADMIN",
     label: "Interview operations",
     href: "/login?role=admin",
     description: "Operational queues, result publication, retakes, integrity and analytics.",
@@ -111,7 +114,7 @@ export default async function LandingPage() {
       <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-6 px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
-            <span className="grid size-9 place-items-center rounded-[11px] bg-ink text-[15px] font-semibold text-white">
+            <span className="bg-accent-gradient grid size-9 place-items-center rounded-[11px] text-[15px] font-semibold text-white shadow-[0_4px_14px_-5px_var(--accent-glow)]">
               G
             </span>
             <span className="leading-tight">
@@ -145,16 +148,21 @@ export default async function LandingPage() {
       </header>
 
       <main>
-        <section className="relative overflow-hidden">
-          <div className="pointer-events-none absolute inset-0 grid-lines opacity-60 [mask-image:radial-gradient(ellipse_at_top,black_20%,transparent_70%)]" />
-          <div className="relative mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-16 pt-14 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:pb-24 lg:pt-20">
+        <section className="relative isolate overflow-hidden">
+          <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+            <div className="animate-drift absolute -left-28 -top-40 size-[440px] rounded-full bg-[radial-gradient(circle_at_center,rgba(15,118,110,0.18),transparent_66%)]" />
+            <div className="animate-drift absolute -right-24 top-4 size-[380px] rounded-full bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.16),transparent_66%)] [animation-delay:-7s]" />
+            <div className="absolute inset-0 grid-lines opacity-60 [mask-image:radial-gradient(ellipse_at_top,black_20%,transparent_70%)]" />
+          </div>
+          <div className="page-enter relative mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-16 pt-14 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:pb-24 lg:pt-20">
             <div>
               <p className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-[11px] font-medium text-ink-soft shadow-card">
-                <span className="size-1.5 rounded-full bg-accent" />
+                <span className="bg-accent-gradient size-1.5 rounded-full" />
                 Interview operations, evaluation &amp; badge clearance
               </p>
               <h1 className="mt-5 max-w-2xl text-balance text-[38px] font-semibold leading-[1.08] tracking-[-0.03em] text-ink sm:text-[52px]">
-                Every interview. Every result. Every badge. Accounted for.
+                Every interview. Every result. Every badge.{" "}
+                <span className="text-gradient">Accounted for.</span>
               </h1>
               <p className="mt-5 max-w-xl text-[15px] leading-7 text-muted sm:text-base">
                 GRIT Interview Hub runs the full journey from skill completion to badge clearance. Students book
@@ -181,8 +189,11 @@ export default async function LandingPage() {
             </div>
 
             <div className="relative">
-              <div className="absolute -inset-3 rounded-[26px] bg-gradient-to-b from-white to-transparent opacity-60" />
-              <div className="relative rounded-[20px] border border-line bg-surface p-4 shadow-pop sm:p-5">
+              <div
+                aria-hidden
+                className="absolute -inset-4 rounded-[30px] bg-gradient-to-br from-[rgba(15,118,110,0.10)] via-white/40 to-[rgba(99,102,241,0.10)] blur-[2px]"
+              />
+              <div className="card-gradient-border relative rounded-[20px] p-4 shadow-pop sm:p-5">
                 <div className="flex items-center justify-between border-b border-line pb-3">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
@@ -235,10 +246,13 @@ export default async function LandingPage() {
                 modelled explicitly here.
               </p>
             </div>
-            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="stagger-grid mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {valueProps.map((item) => (
-                <div key={item.title} className="rounded-card border border-line bg-surface p-5 shadow-card">
-                  <span className="grid size-8 place-items-center rounded-[9px] border border-line bg-canvas text-accent">
+                <div
+                  key={item.title}
+                  className="group rounded-card border border-line bg-surface p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-pop"
+                >
+                  <span className="grid size-8 place-items-center rounded-[9px] border border-line bg-canvas text-accent transition-transform group-hover:scale-110">
                     {item.icon}
                   </span>
                   <h3 className="mt-4 text-[14px] font-semibold tracking-tight">{item.title}</h3>
@@ -265,9 +279,7 @@ export default async function LandingPage() {
             <div className="mt-10 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
               {workflow.map(([title, description], index) => (
                 <div key={title} className="border-t border-line pt-4">
-                  <p className="text-[11px] font-semibold tabular text-zinc-400">
-                    {String(index + 1).padStart(2, "0")}
-                  </p>
+                  <p className="text-[11px] font-semibold tabular text-accent">{String(index + 1).padStart(2, "0")}</p>
                   <h3 className="mt-1 text-[14px] font-semibold">{title}</h3>
                   <p className="mt-1.5 text-[12.5px] leading-5.5 text-muted">{description}</p>
                 </div>
@@ -284,14 +296,19 @@ export default async function LandingPage() {
                 A focused workspace for every person in the process.
               </h2>
             </div>
-            <div className="mt-10 grid gap-4 lg:grid-cols-3">
+            <div className="stagger-grid mt-10 grid gap-4 lg:grid-cols-3">
               {roles.map((role) => (
                 <Link
                   key={role.label}
                   href={role.href}
-                  className="group flex flex-col rounded-card border border-line bg-surface p-6 shadow-card transition-shadow hover:shadow-pop"
+                  data-role={role.key}
+                  className="group relative isolate flex flex-col overflow-hidden rounded-card border border-line bg-surface p-6 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-pop"
                 >
-                  <span className="grid size-10 place-items-center rounded-[11px] bg-accent-soft text-accent-ink">
+                  <span
+                    aria-hidden
+                    className="bg-accent-gradient absolute inset-x-0 top-0 h-[2px] opacity-0 transition-opacity group-hover:opacity-100"
+                  />
+                  <span className="grid size-10 place-items-center rounded-[11px] bg-accent-soft text-accent-ink transition-transform duration-200 group-hover:scale-105">
                     {role.icon}
                   </span>
                   <h3 className="mt-4 text-[16px] font-semibold tracking-tight">{role.label}</h3>
@@ -340,7 +357,7 @@ export default async function LandingPage() {
       <footer className="border-t border-line">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-8 text-[12px] text-muted sm:px-6">
           <p className="flex items-center gap-2">
-            <span className="grid size-6 place-items-center rounded-md bg-ink text-[10px] font-semibold text-white">
+            <span className="bg-accent-gradient grid size-6 place-items-center rounded-md text-[10px] font-semibold text-white">
               G
             </span>
             GRIT Interview Hub · Interview scheduling, evaluation &amp; badge clearance

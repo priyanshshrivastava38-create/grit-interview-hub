@@ -209,12 +209,12 @@ export async function getAdminMetrics(rangeDays = 30) {
 
   const outcomes = [
     { name: "Pass", key: "PASS", value: published.filter((row) => row.outcome === "PASS").length, color: "#0f766e" },
-    { name: "Fail", key: "FAIL", value: published.filter((row) => row.outcome === "FAIL").length, color: "#b45309" },
+    { name: "Fail", key: "FAIL", value: published.filter((row) => row.outcome === "FAIL").length, color: "#e11d48" },
     {
       name: "Retake later",
       key: "RETAKE_LATER",
       value: published.filter((row) => row.outcome === "RETAKE_LATER").length,
-      color: "#64748b",
+      color: "#6366f1",
     },
   ];
 

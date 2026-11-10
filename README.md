@@ -27,6 +27,8 @@ The application is a real Next.js + PostgreSQL system. Bookings, state changes, 
 
 The app is built as an enterprise workspace rather than a set of forms:
 
+- **Role-based colour system**: each workspace has its own accent pair — teal/indigo for students, indigo/sky for interviewers, rose/amber for operations — applied through CSS custom properties on the app shell, so buttons, active navigation, progress and ambient backgrounds all recolour with the role.
+- **Motion with restraint**: staggered card entrances, a page-level fade-up, animated clearance connectors and gradient sheen on primary actions. Every animation is disabled automatically under `prefers-reduced-motion`.
 - **App shell** with role-aware navigation, workspace breadcrumb, page title and a timezone chip.
 - **⌘K command palette** that searches every page the current role can reach, with arrow-key navigation.
 - **Notification popover** in the header with unread count, relative timestamps and a link to full history.

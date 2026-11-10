@@ -32,8 +32,9 @@ export function BookingVolumeChart({ data }: { data: Array<{ label: string; book
         <AreaChart data={data} margin={{ top: 8, right: 8, left: -22, bottom: 0 }}>
           <defs>
             <linearGradient id="bookingFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0f766e" stopOpacity={0.22} />
-              <stop offset="100%" stopColor="#0f766e" stopOpacity={0.02} />
+              <stop offset="0%" stopColor="#0f766e" stopOpacity={0.28} />
+              <stop offset="60%" stopColor="#14b8a6" stopOpacity={0.12} />
+              <stop offset="100%" stopColor="#6366f1" stopOpacity={0.02} />
             </linearGradient>
           </defs>
           <CartesianGrid stroke="#ecebe7" vertical={false} />
@@ -133,14 +134,14 @@ export function WorkloadChart({
             tickFormatter={(value: string) => value.split(" ")[0] ?? value}
           />
           <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "#71717a" }} allowDecimals={false} />
-          <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "rgba(15,118,110,.05)" }} />
+          <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "rgba(79,70,229,.06)" }} />
           <Legend
             iconType="circle"
             iconSize={8}
             wrapperStyle={{ fontSize: 12, color: "#71717a" }}
           />
-          <Bar dataKey="upcoming" name="Upcoming" fill="#0f766e" radius={[4, 4, 0, 0]} maxBarSize={36} />
-          <Bar dataKey="pending" name="Awaiting publication" fill="#c9a227" radius={[4, 4, 0, 0]} maxBarSize={36} />
+          <Bar dataKey="upcoming" name="Upcoming" fill="#4f46e5" radius={[4, 4, 0, 0]} maxBarSize={36} />
+          <Bar dataKey="pending" name="Awaiting publication" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={36} />
         </BarChart>
       </ResponsiveContainer>
     </div>

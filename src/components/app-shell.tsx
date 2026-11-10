@@ -222,7 +222,7 @@ export function AppShell({
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between px-5 pb-5 pt-5">
         <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
-          <span className="grid size-9 place-items-center rounded-[11px] bg-ink text-[15px] font-semibold tracking-tight text-white">
+          <span className="bg-accent-gradient grid size-9 place-items-center rounded-[11px] text-[15px] font-semibold tracking-tight text-white shadow-[0_4px_12px_-4px_var(--accent-glow)]">
             G
           </span>
           <span className="leading-tight">
@@ -243,7 +243,7 @@ export function AppShell({
       {demoMode ? (
         <div className="mx-3 mb-4 rounded-[12px] border border-line bg-[#fafaf7] px-3 py-2">
           <p className="flex items-center gap-1.5 text-[11px] font-medium text-ink-soft">
-            <span className="size-1.5 rounded-full bg-accent" /> Demo workspace
+            <span className="size-1.5 animate-pulse rounded-full bg-accent" /> Demo workspace
           </p>
           <p className="mt-0.5 text-[11px] leading-4 text-muted">Seeded data. Explore freely and switch roles anytime.</p>
         </div>
@@ -265,12 +265,18 @@ export function AppShell({
                       onClick={() => setOpen(false)}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "group flex items-center justify-between gap-2 rounded-[9px] px-2.5 py-2.5 text-[13px] font-medium transition-colors",
+                        "group relative flex items-center justify-between gap-2 rounded-[9px] px-2.5 py-2.5 text-[13px] font-medium transition-colors",
                         active
                           ? "bg-white text-ink shadow-card ring-1 ring-line"
                           : "text-ink-soft hover:bg-white/70 hover:text-ink",
                       )}
                     >
+                      {active ? (
+                        <span
+                          aria-hidden
+                          className="bg-accent-gradient absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full"
+                        />
+                      ) : null}
                       <span className="flex items-center gap-2.5">
                         <span className={active ? "text-accent" : "text-zinc-400 group-hover:text-zinc-500"}>
                           {item.icon}
@@ -325,7 +331,7 @@ export function AppShell({
   );
 
   return (
-    <div className="min-h-dvh bg-canvas">
+    <div className="workspace-bg min-h-dvh" data-role={user.role}>
       <a
         href="#main-content"
         className="sr-only rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100]"
@@ -467,7 +473,9 @@ export function AppShell({
           tabIndex={-1}
           className="mx-auto w-full max-w-[1200px] px-4 pb-24 pt-6 outline-none sm:px-6 lg:px-8 lg:pb-8 lg:pt-8"
         >
-          {children}
+          <div key={pathname} className="page-enter">
+            {children}
+          </div>
         </main>
       </div>
 
@@ -488,7 +496,12 @@ export function AppShell({
                   active ? "text-accent" : "text-muted hover:text-ink",
                 )}
               >
-                <span className={cn("grid size-6 place-items-center rounded-md", active && "bg-accent-soft")}>
+                <span
+                  className={cn(
+                    "grid size-6 place-items-center rounded-md transition-all",
+                    active && "bg-accent-gradient text-white shadow-[0_4px_10px_-4px_var(--accent-glow)]",
+                  )}
+                >
                   {item.icon}
                 </span>
                 <span className="w-full truncate text-center">{item.short ?? item.label}</span>

@@ -49,7 +49,7 @@ export function NotificationBell({ unread, items }: { unread: number; items: Not
       >
         <Bell className="size-[18px]" />
         {unread > 0 ? (
-          <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-accent ring-2 ring-canvas" />
+          <span className="absolute right-1.5 top-1.5 size-2 animate-pulse rounded-full bg-accent ring-2 ring-canvas" />
         ) : null}
       </button>
 

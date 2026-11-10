@@ -278,7 +278,11 @@ export default async function StudentOverviewPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.55fr_1fr]">
-        <Card className="overflow-hidden">
+        <Card className="relative isolate overflow-hidden">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-16 -top-24 -z-10 size-56 rounded-full bg-accent-soft opacity-80 blur-2xl"
+          />
           <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start">
             <span
               className={cn(
@@ -366,7 +370,7 @@ export default async function StudentOverviewPage() {
         </Card>
       </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="stagger-grid mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Skills complete"
           value={`${completedSkills}/${skills.length}`}
