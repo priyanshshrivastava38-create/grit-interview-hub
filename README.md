@@ -185,20 +185,27 @@ The application is deployment-ready but **has not been published yet**; this rep
 
 Target: Vercel (Next.js) + hosted PostgreSQL (Supabase or Neon).
 
-1. Create a Postgres database and copy its pooled connection string.
+1. Create a Postgres database and copy its connection string. Use the **direct**
+   (non-pooled) URL for migrations and seeding, and the pooled URL for the
+   running application when the provider distinguishes them.
 2. Apply migrations and seed once against it:
    ```bash
    DATABASE_URL="postgresql://…" npm run db:deploy
    DATABASE_URL="postgresql://…" npm run db:seed
    ```
-3. Import the repository into Vercel and set:
-   - `DATABASE_URL` — hosted Postgres connection string
-   - `AUTH_SECRET` — long random string
+3. Deploy with the Vercel CLI (`npx vercel`) or by importing the repository at
+   vercel.com/new, and set:
+   - `DATABASE_URL` — hosted Postgres connection string (pooled for runtime)
+   - `AUTH_SECRET` — long random string (`openssl rand -hex 32`)
    - `APP_TIMEZONE=Asia/Kolkata`
    - `DEMO_MODE=true` (to enable the demo personas and reset action)
 4. Deploy. Verify all three roles and a booking on the public URL before sharing it.
 
-For Supabase, use the transaction pooler connection string (port `6543`) and append `?pgbouncer=true&connection_limit=1` for serverless usage.
+The `postinstall` script generates the Prisma client during the Vercel build.
+Migrations are deliberately not run on every build; apply them explicitly as
+above so a deployment cannot silently reshape the database.
+
+For Supabase, use the transaction pooler connection string (port `6543`) and append `?pgbouncer=true&connection_limit=1` for serverless usage. For Neon, the pooled host works with `@prisma/adapter-pg`; run migrations against the direct host.
 
 ## Project structure
 
