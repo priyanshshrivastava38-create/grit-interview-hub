@@ -159,8 +159,7 @@ export default async function StudentBookPage({
           title="You are eligible to book"
           action={<Badge tone="accent">Attempt {eligibility.attemptNumber}</Badge>}
         >
-          Select a slot below. The slot is re-checked inside a database transaction when you confirm, so two students
-          cannot hold the same interview.
+          Pick a time that works for you. When you confirm, the slot is reserved for you immediately.
         </InfoBanner>
       ) : (
         <InfoBanner
@@ -214,14 +213,19 @@ export default async function StudentBookPage({
       ) : null}
 
       <div className="mt-5 grid gap-4 xl:grid-cols-[1fr_280px]">
-        <div>
+        <div className="min-w-0">
           {showAvailability ? (
             <Card>
-            <div className="flex flex-wrap items-center gap-3 border-b border-line px-5 py-3.5">
-              <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-ink-soft">
-                <Filter className="size-3.5 text-muted" /> Filter
-              </span>
-              <form method="get" className="flex flex-1 flex-wrap items-center gap-2">
+            <div className="border-b border-line px-4 py-3 sm:px-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-ink-soft">
+                  <Filter className="size-3.5 text-muted" /> Filter
+                </span>
+                <span className="ml-auto text-[11.5px] text-muted">
+                  {slots.length} open slot{slots.length === 1 ? "" : "s"} in the next 21 days
+                </span>
+              </div>
+              <form method="get" className="mt-2 flex flex-wrap items-center gap-2">
                 <label htmlFor="interviewer" className="sr-only">
                   Interviewer
                 </label>
@@ -229,7 +233,7 @@ export default async function StudentBookPage({
                   id="interviewer"
                   name="interviewer"
                   defaultValue={interviewerFilter ?? ""}
-                  className={cn(selectClasses, "h-8 w-auto min-w-[180px] text-[12.5px]")}
+                  className={cn(selectClasses, "h-9 min-w-0 flex-1 text-[12.5px] sm:w-auto sm:flex-none sm:min-w-[180px]")}
                 >
                   <option value="">All interviewers</option>
                   {interviewers.map((interviewer) => (
@@ -246,9 +250,6 @@ export default async function StudentBookPage({
                     Reset
                   </Link>
                 ) : null}
-                <span className="ml-auto text-[11.5px] text-muted">
-                  {slots.length} open slot{slots.length === 1 ? "" : "s"} in the next 21 days
-                </span>
               </form>
             </div>
 
@@ -312,8 +313,9 @@ export default async function StudentBookPage({
 
                 <ul className="divide-y divide-line border-t border-line">
                   {daySlots.map((slot) => (
-                    <li key={slot.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
+                    <li key={slot.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:flex-nowrap sm:px-5">
                       <div className="w-[110px] shrink-0">
+
                         <p className="text-[14px] font-semibold tabular">{timeInTz(slot.startsAt)}</p>
                         <p className="text-[11px] text-muted">
                           to {timeInTz(slot.endsAt)} · {minutesBetween(slot.startsAt, slot.endsAt)} min
@@ -328,7 +330,7 @@ export default async function StudentBookPage({
                           </p>
                         </div>
                       </div>
-                      <div className="w-[150px] shrink-0">
+                      <div className="w-full shrink-0 sm:w-[150px]">
                         {eligibility.allowed ? (
                           <BookSlotButton
                             slotId={slot.id}
@@ -340,7 +342,7 @@ export default async function StudentBookPage({
                           />
                         ) : (
                           <span
-                            className="flex h-9 items-center justify-end gap-1.5 pr-1 text-[12px] font-medium text-muted"
+                            className="flex h-9 items-center justify-start gap-1.5 text-[12px] font-medium text-muted sm:justify-end sm:pr-1"
                             title={eligibility.message}
                           >
                             <Eye className="size-3.5" /> Open
@@ -400,8 +402,8 @@ export default async function StudentBookPage({
                 {BOOKING_POLICY.cancellationHours} hours before are allowed without an operations review.
               </p>
               <p className="flex gap-2">
-                <Lock className="mt-0.5 size-3.5 shrink-0 text-accent" /> Confirmation is atomic. If another student
-                takes the slot first, you will be asked to choose another time.
+                <Lock className="mt-0.5 size-3.5 shrink-0 text-accent" /> If someone else takes the slot at the same
+                moment, we will ask you to pick another time — you are never double-booked.
               </p>
             </CardBody>
           </Card>

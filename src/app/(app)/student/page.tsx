@@ -239,7 +239,7 @@ export default async function StudentOverviewPage() {
       return {
         eyebrow: "Eligibility unlocked",
         title: "You are eligible for your GRIT interview",
-        body: "Choose an available slot to begin your badge clearance journey. Slots are reserved the moment you confirm.",
+        body: "Pick a time that works for you. Your slot is reserved the moment you confirm, and you can reschedule up to 4 hours before the interview.",
         tone: "accent" as const,
         cta: { href: "/student/book", label: "Choose a slot" },
       };
@@ -313,7 +313,7 @@ export default async function StudentOverviewPage() {
             ].map((item) => (
               <div key={item.label} className="border-r border-line px-4 py-3 last:border-0">
                 <p className="text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted">{item.label}</p>
-                <p className="mt-0.5 text-[12.5px] font-medium capitalize text-ink">{item.value}</p>
+                <p className="mt-0.5 text-[12.5px] font-medium text-ink first-letter:uppercase">{item.value}</p>
               </div>
             ))}
           </div>
@@ -460,31 +460,7 @@ export default async function StudentOverviewPage() {
             </div>
           </div>
         </Card>
-      ) : (
-        <Card className="mt-6">
-          <CardHeader
-            title="Upcoming interview"
-            description="Confirmed interviews and joining details appear here."
-            action={<StatusPill value="AVAILABLE" />}
-          />
-          <EmptyState
-            icon={<CalendarDays className="size-4" />}
-            title={eligibility.allowed ? "No interview booked yet" : "Booking is not available"}
-            description={
-              eligibility.allowed
-                ? "You are eligible. Choose a slot that gives you at least an hour of preparation time."
-                : eligibility.message
-            }
-            action={
-              eligibility.allowed ? (
-                <Link href="/student/book" className={buttonClasses("primary", "sm")}>
-                  Choose a slot <ArrowRight className="size-3.5" />
-                </Link>
-              ) : null
-            }
-          />
-        </Card>
-      )}
+      ) : null}
 
       {pendingResult ? (
         <div className="mt-6">
@@ -567,7 +543,12 @@ export default async function StudentOverviewPage() {
           />
           <CardBody className="p-0">
             {data.notifications.length === 0 ? (
-              <EmptyState icon={<Bell className="size-4" />} title="No updates yet" description="You will be notified when anything changes." />
+              <EmptyState
+                className="py-8"
+                icon={<Bell className="size-4" />}
+                title="No updates yet"
+                description="You will be notified when anything changes."
+              />
             ) : (
               <ul className="divide-y divide-line">
                 {data.notifications.slice(0, 4).map((notification) => (
@@ -606,6 +587,7 @@ export default async function StudentOverviewPage() {
         {data.history.length === 0 ? (
           <Card>
             <EmptyState
+              className="py-8"
               icon={<BookOpenCheck className="size-4" />}
               title="No completed interviews yet"
               description="Your completed interviews, evaluations and outcomes will appear here."

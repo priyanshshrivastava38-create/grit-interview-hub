@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, CheckCircle2, Search, ShieldCheck, Sparkles, UserRound } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  ChevronDown,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  UserRound,
+} from "lucide-react";
 import { demoLogin } from "@/app/actions/session";
 import { buttonClasses } from "@/components/ui";
 import { cn } from "@/lib/utils";
@@ -52,6 +61,7 @@ export function DemoLogin({
 }) {
   const [role, setRole] = useState<"STUDENT" | "INTERVIEWER" | "ADMIN">(initialRole);
   const [query, setQuery] = useState("");
+  const [showAll, setShowAll] = useState(false);
   const meta = roleMeta[role];
   const rolePersonas = personas.filter((persona) => persona.role === role);
   const primary = rolePersonas[0];
@@ -127,55 +137,67 @@ export function DemoLogin({
           </p>
         )}
 
-        <div className="mt-6 border-t border-line pt-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
-              Explore a specific scenario
-            </p>
-            <span className="text-[11px] text-muted">
-              {rolePersonas.length} persona{rolePersonas.length === 1 ? "" : "s"}
+        <div className="mt-5 rounded-[12px] border border-line bg-[#fafaf7] p-3">
+          <button
+            type="button"
+            onClick={() => setShowAll((current) => !current)}
+            aria-expanded={showAll}
+            aria-controls="scenario-list"
+            className="flex w-full items-center justify-between gap-3 text-left"
+          >
+            <span className="min-w-0">
+              <span className="block text-[13px] font-semibold text-ink">Or pick a specific scenario</span>
+              <span className="block text-[11.5px] leading-5 text-muted">
+                {rolePersonas.length} real {rolePersonas.length === 1 ? "state" : "states"} for this role
+              </span>
             </span>
-          </div>
-          <p className="mt-1 text-[12px] leading-5 text-muted">
-            Each persona opens a different real state. Search by name, journey or issue.
-          </p>
-          <div className="relative mt-3">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted" />
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search scenarios"
-              aria-label="Search demo scenarios"
-              className="h-9 w-full rounded-[9px] border border-line-strong bg-surface pl-9 pr-3 text-[12.5px] text-ink placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15"
-            />
-          </div>
-          <div className="mt-2 max-h-[286px] space-y-1 overflow-y-auto pr-1">
-            {filteredPersonas.length === 0 ? (
-              <p className="rounded-[9px] border border-dashed border-line px-3 py-6 text-center text-[12px] text-muted">
-                No scenarios match “{query.trim()}”.
-              </p>
-            ) : (
-              filteredPersonas.map((persona) => (
-                <form key={persona.email} action={demoLogin}>
-                  <input type="hidden" name="email" value={persona.email} />
-                  <button
-                    type="submit"
-                    disabled={!demoMode}
-                    className="group flex w-full items-center justify-between gap-3 rounded-[10px] border border-transparent px-2.5 py-2 text-left transition-colors hover:border-line hover:bg-[#fafaf7] disabled:opacity-50"
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate text-[13px] font-medium text-ink">{persona.name}</span>
-                      <span className="block truncate text-[11.5px] text-muted">
-                        {persona.title} · {persona.scenario}
-                      </span>
-                    </span>
-                    <ArrowRight className="size-3.5 shrink-0 text-zinc-300 group-hover:text-accent" />
-                  </button>
-                </form>
-              ))
-            )}
-          </div>
+            <span className="inline-flex shrink-0 items-center gap-1 text-[12px] font-medium text-accent">
+              {showAll ? "Hide" : "Browse"}
+              <ChevronDown className={cn("size-4 transition-transform", showAll && "rotate-180")} />
+            </span>
+          </button>
+
+          {showAll ? (
+            <div id="scenario-list" className="mt-3 border-t border-line pt-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted" />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search by name, journey or issue"
+                  aria-label="Search demo scenarios"
+                  className="h-9 w-full rounded-[9px] border border-line-strong bg-surface pl-9 pr-3 text-[12.5px] text-ink placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15"
+                />
+              </div>
+              <div className="mt-2 max-h-[286px] space-y-1 overflow-y-auto pr-1">
+                {filteredPersonas.length === 0 ? (
+                  <p className="rounded-[9px] border border-dashed border-line px-3 py-6 text-center text-[12px] text-muted">
+                    No scenarios match “{query.trim()}”.
+                  </p>
+                ) : (
+                  filteredPersonas.map((persona) => (
+                    <form key={persona.email} action={demoLogin}>
+                      <input type="hidden" name="email" value={persona.email} />
+                      <button
+                        type="submit"
+                        disabled={!demoMode}
+                        className="group flex w-full items-center justify-between gap-3 rounded-[10px] border border-transparent px-2.5 py-2 text-left transition-colors hover:border-line hover:bg-surface disabled:opacity-50"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-[13px] font-medium text-ink">{persona.name}</span>
+                          <span className="block truncate text-[11.5px] text-muted">
+                            {persona.title} · {persona.scenario}
+                          </span>
+                        </span>
+                        <ArrowRight className="size-3.5 shrink-0 text-zinc-300 group-hover:text-accent" />
+                      </button>
+                    </form>
+                  ))
+                )}
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className="mt-6 flex items-start gap-2.5 rounded-[11px] border border-line bg-[#fafaf7] px-3 py-2.5">

@@ -31,8 +31,10 @@ The app is built as an enterprise workspace rather than a set of forms:
 - **⌘K command palette** that searches every page the current role can reach, with arrow-key navigation.
 - **Notification popover** in the header with unread count, relative timestamps and a link to full history.
 - **Account menu** with identity, product overview, demo-role switching and sign out.
-- **Clearance-path tracker** on the student dashboard: six stages (skills → eligibility → booking → interview → result → badge) with done, current, attention and upcoming states.
-- Responsive mobile drawer with focus/scroll handling, native dialogs for confirmations, toast feedback and keyboard-accessible controls throughout.
+- **Clearance-path tracker** on the student dashboard: six stages (skills → eligibility → booking → interview → result → badge) with done, current, attention and upcoming states. On mobile the six stages become a complete two-column grid instead of a scrolled strip.
+- **Mobile bottom navigation** with the role's four primary destinations, an active marker and a More button for the full drawer.
+- **Progressive demo login**: one recommended persona per role up front, with the full scenario list behind a disclosure and search.
+- Plain-language booking, reschedule and policy copy; native dialogs for confirmations, toast feedback and keyboard-accessible controls throughout.
 
 ## Demo access
 

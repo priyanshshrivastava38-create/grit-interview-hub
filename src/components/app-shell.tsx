@@ -19,6 +19,7 @@ import {
   Home,
   LogOut,
   Menu,
+  MoreHorizontal,
   RotateCcw,
   ScrollText,
   Search,
@@ -33,7 +34,7 @@ import { CommandMenu } from "@/components/command-menu";
 import { NotificationBell, type NotificationPreview } from "@/components/notification-bell";
 import { cn, roleLabel } from "@/lib/utils";
 
-type NavItem = { href: string; label: string; icon: ReactNode; badge?: number };
+type NavItem = { href: string; label: string; short?: string; icon: ReactNode; badge?: number };
 type NavGroup = { title: string; items: NavItem[] };
 
 const icons = {
@@ -67,10 +68,10 @@ function navFor(role: string, unread: number): NavGroup[] {
       {
         title: "Your clearance",
         items: [
-          { href: "/student", label: "Overview", icon: icons.overview },
-          { href: "/student/book", label: "Book an interview", icon: icons.book },
-          { href: "/student/interviews", label: "My interviews", icon: icons.interviews },
-          { href: "/student/badge", label: "Badge status", icon: icons.badge },
+          { href: "/student", label: "Overview", short: "Home", icon: icons.overview },
+          { href: "/student/book", label: "Book an interview", short: "Book", icon: icons.book },
+          { href: "/student/interviews", label: "My interviews", short: "Interviews", icon: icons.interviews },
+          { href: "/student/badge", label: "Badge status", short: "Badge", icon: icons.badge },
         ],
       },
       { title: "Account", items: [notifications] },
@@ -81,10 +82,10 @@ function navFor(role: string, unread: number): NavGroup[] {
       {
         title: "Interview desk",
         items: [
-          { href: "/interviewer", label: "Today’s overview", icon: icons.overview },
-          { href: "/interviewer/interviews", label: "Interview schedule", icon: icons.schedule },
-          { href: "/interviewer/availability", label: "Availability", icon: icons.availability },
-          { href: "/interviewer/history", label: "Evaluation history", icon: icons.history },
+          { href: "/interviewer", label: "Today’s overview", short: "Today", icon: icons.overview },
+          { href: "/interviewer/interviews", label: "Interview schedule", short: "Schedule", icon: icons.schedule },
+          { href: "/interviewer/availability", label: "Availability", short: "Availability", icon: icons.availability },
+          { href: "/interviewer/history", label: "Evaluation history", short: "History", icon: icons.history },
         ],
       },
       { title: "Account", items: [notifications] },
@@ -94,10 +95,10 @@ function navFor(role: string, unread: number): NavGroup[] {
     {
       title: "Operations",
       items: [
-        { href: "/admin", label: "Command centre", icon: icons.overview },
-        { href: "/admin/students", label: "Students", icon: icons.students },
-        { href: "/admin/bookings", label: "Bookings", icon: icons.bookings },
-        { href: "/admin/interviewers", label: "Interviewers", icon: icons.interviewers },
+        { href: "/admin", label: "Command centre", short: "Command", icon: icons.overview },
+        { href: "/admin/students", label: "Students", short: "Students", icon: icons.students },
+        { href: "/admin/bookings", label: "Bookings", short: "Bookings", icon: icons.bookings },
+        { href: "/admin/interviewers", label: "Interviewers", short: "Interviewers", icon: icons.interviewers },
         { href: "/admin/results", label: "Result publication", icon: icons.results },
         { href: "/admin/retakes", label: "Retake requests", icon: icons.retakes },
         { href: "/admin/malpractice", label: "Integrity cases", icon: icons.malpractice },
@@ -187,6 +188,8 @@ export function AppShell({
   }, [profileOpen]);
 
   const groups = navFor(user.role, unread);
+  const mobilePrimary = groups[0].items.slice(0, 4);
+  const roleHome = user.role === "STUDENT" ? "/student" : user.role === "INTERVIEWER" ? "/interviewer" : "/admin";
   const commandGroups = [
     ...groups.map((group) => ({
       title: group.title,
@@ -367,9 +370,12 @@ export function AppShell({
               <Menu className="size-5" />
             </button>
             <div className="flex min-w-0 items-center gap-1.5">
-              <span className="hidden text-[11px] font-medium uppercase tracking-[0.08em] text-muted xl:inline">
+              <Link
+                href={roleHome}
+                className="hidden text-[11px] font-medium uppercase tracking-[0.08em] text-muted hover:text-ink xl:inline"
+              >
                 {roleLabel(user.role)}
-              </span>
+              </Link>
               <ChevronRight className="hidden size-3 text-zinc-300 xl:inline" />
               <p className="truncate text-[13px] font-semibold tracking-tight text-ink">{titleFor(pathname)}</p>
             </div>
@@ -456,8 +462,55 @@ export function AppShell({
             </div>
           </div>
         </header>
-        <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-[1200px] px-4 py-6 outline-none sm:px-6 lg:px-8 lg:py-8">{children}</main>
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="mx-auto w-full max-w-[1200px] px-4 pb-24 pt-6 outline-none sm:px-6 lg:px-8 lg:pb-8 lg:pt-8"
+        >
+          {children}
+        </main>
       </div>
+
+      <nav
+        aria-label="Primary mobile"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      >
+        <div className="mx-auto grid max-w-md grid-cols-5">
+          {mobilePrimary.map((item) => {
+            const active = isActive(pathname, item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 px-1 pb-2 pt-2 text-[10.5px] font-medium transition-colors",
+                  active ? "text-accent" : "text-muted hover:text-ink",
+                )}
+              >
+                <span className={cn("grid size-6 place-items-center rounded-md", active && "bg-accent-soft")}>
+                  {item.icon}
+                </span>
+                <span className="w-full truncate text-center">{item.short ?? item.label}</span>
+              </Link>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            aria-label="More navigation"
+            className="flex flex-col items-center gap-0.5 px-1 pb-2 pt-2 text-[10.5px] font-medium text-muted hover:text-ink"
+          >
+            <span className="relative grid size-6 place-items-center rounded-md">
+              <MoreHorizontal className="size-[18px]" />
+              {unread > 0 ? (
+                <span className="absolute -right-1 -top-0.5 size-2 rounded-full bg-accent ring-2 ring-surface" />
+              ) : null}
+            </span>
+            <span>More</span>
+          </button>
+        </div>
+      </nav>
 
       <CommandMenu open={commandOpen} onOpenChange={setCommandOpen} groups={commandGroups} />
     </div>

@@ -241,7 +241,7 @@ export default async function StudentInterviewsPage({
                   <div id="reschedule" className="scroll-mt-24">
                     <Modal
                       title="Reschedule interview"
-                      description="Your original booking is retained in history. The new slot is reserved atomically."
+                      description="Your original booking stays in your history. The new time is reserved as soon as you confirm."
                       trigger={
                         <>
                           <CalendarClock className="size-3.5" /> Reschedule
