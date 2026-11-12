@@ -195,24 +195,31 @@ Target: Vercel (Next.js) + hosted PostgreSQL (Supabase or Neon).
 1. Create a Postgres database and copy its connection string. Use the **direct**
    (non-pooled) URL for migrations and seeding, and the pooled URL for the
    running application when the provider distinguishes them.
-2. Apply migrations and seed once against it:
-   ```bash
-   DATABASE_URL="postgresql://…" npm run db:deploy
-   DATABASE_URL="postgresql://…" npm run db:seed
-   ```
-3. Deploy with the Vercel CLI (`npx vercel`) or by importing the repository at
-   vercel.com/new, and set:
+2. Set these environment variables on the Vercel project for **Production,
+   Preview and Development**, then redeploy:
    - `DATABASE_URL` — hosted Postgres connection string (pooled for runtime)
-   - `AUTH_SECRET` — long random string (`openssl rand -hex 32`)
+   - `AUTH_SECRET` — **required**; long random string (`openssl rand -hex 32`)
    - `APP_TIMEZONE=Asia/Kolkata`
    - `DEMO_MODE=true` (to enable the demo personas and reset action)
-4. Deploy. Verify all three roles and a booking on the public URL before sharing it.
+   - `DIRECT_URL` — optional direct URL used only by migrations when `DATABASE_URL` is pooled
+3. Deploy. The `vercel-build` script applies pending migrations, seeds the demo
+   scenarios only when the database has no users, then runs `next build`. On a
+   database that already has data it is a no-op, so redeploys never reset it.
+4. Verify all three roles and a booking on the public URL before sharing it.
 
-The `postinstall` script generates the Prisma client during the Vercel build.
-Migrations are deliberately not run on every build; apply them explicitly as
-above so a deployment cannot silently reshape the database.
+Migrations and seeding can also be run manually:
 
-For Supabase, use the transaction pooler connection string (port `6543`) and append `?pgbouncer=true&connection_limit=1` for serverless usage. For Neon, the pooled host works with `@prisma/adapter-pg`; run migrations against the direct host.
+```bash
+DATABASE_URL="postgresql://…" npm run db:deploy
+DATABASE_URL="postgresql://…" npm run db:seed
+```
+
+`AUTH_SECRET` is read by the server at build and runtime; a deployment without it
+fails during page-data collection with `Missing required environment variable:
+AUTH_SECRET`. Changing a Vercel environment variable does not affect existing
+deployments, so redeploy after adding it.
+
+For Supabase, use the transaction pooler connection string (port `6543`) and append `?pgbouncer=true&connection_limit=1` for serverless usage; set `DIRECT_URL` to the direct host for migrations. For Neon, the pooled host works with `@prisma/adapter-pg`; run migrations against the direct host via `DIRECT_URL`.
 
 ## Project structure
 
