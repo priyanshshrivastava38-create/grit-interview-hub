@@ -125,6 +125,7 @@ Publishing a pass also awards the badge; publishing a fail/retake creates the re
 ## Security and access control
 
 - Sessions are HMAC-signed, `httpOnly`, `SameSite=Lax`, `Secure` in production, 7-day expiry.
+- Demo deployments fall back to a signing key derived from `DATABASE_URL` when `AUTH_SECRET` is absent. Set `AUTH_SECRET` for real identity deployments; `DEMO_MODE=false` requires it.
 - Every page and server action calls `requireUser` / `requireRole` / `requireStudent` / `requireInterviewer` on the server. Hiding a button is never the control.
 - Interviewers can only access interviews assigned to them; students can only change their own bookings.
 - All server-action input is validated with Zod; domain errors are returned as typed results and shown as toasts.
@@ -198,7 +199,7 @@ Target: Vercel (Next.js) + hosted PostgreSQL (Supabase or Neon).
 2. Set these environment variables on the Vercel project for **Production,
    Preview and Development**, then redeploy:
    - `DATABASE_URL` — hosted Postgres connection string (pooled for runtime)
-   - `AUTH_SECRET` — **required**; long random string (`openssl rand -hex 32`)
+   - `AUTH_SECRET` — recommended; **required when `DEMO_MODE=false`**. Demo mode derives a stable key from `DATABASE_URL` if omitted.
    - `APP_TIMEZONE=Asia/Kolkata`
    - `DEMO_MODE=true` (to enable the demo personas and reset action)
    - `DIRECT_URL` — optional direct URL used only by migrations when `DATABASE_URL` is pooled
@@ -214,10 +215,11 @@ DATABASE_URL="postgresql://…" npm run db:deploy
 DATABASE_URL="postgresql://…" npm run db:seed
 ```
 
-`AUTH_SECRET` is read by the server at build and runtime; a deployment without it
-fails during page-data collection with `Missing required environment variable:
-AUTH_SECRET`. Changing a Vercel environment variable does not affect existing
-deployments, so redeploy after adding it.
+`AUTH_SECRET` is read by the server at build and runtime. Demo mode tolerates an
+absent value by deriving a stable key from `DATABASE_URL`, so a zero-config
+preview still works; set it explicitly before disabling demo mode. Changing a
+Vercel environment variable does not affect existing deployments, so redeploy
+after adding it.
 
 For Supabase, use the transaction pooler connection string (port `6543`) and append `?pgbouncer=true&connection_limit=1` for serverless usage; set `DIRECT_URL` to the direct host for migrations. For Neon, the pooled host works with `@prisma/adapter-pg`; run migrations against the direct host via `DIRECT_URL`.
 
